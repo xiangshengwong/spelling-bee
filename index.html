@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英文聽寫小考</title>
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="聽寫小考">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;color:#1a1a1a;padding:1.5rem}
+.app{max-width:900px;margin:0 auto}
+.tab-bar{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:1px solid #e0e0e0}
+.tab{background:none;border:none;padding:8px 16px;font-size:14px;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:#1a1a1a;border-bottom:2px solid #1a1a1a;font-weight:500}
+.tab.hidden{display:none}
+.card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.lbl{font-size:13px;color:#888;margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:1px solid #ddd;border-radius:8px;background:transparent;color:#1a1a1a;font-size:14px;cursor:pointer}
+.btn:hover{background:#f5f5f3}
+.btn:active{transform:scale(0.98)}
+.btn:disabled{opacity:0.45;cursor:not-allowed}
+.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-primary:hover{opacity:0.85;background:#1a1a1a}
+.btn-parent{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.btn-parent:hover{opacity:0.85;background:#4f46e5}
+.btn-sm{padding:6px 12px;font-size:13px}
+.btn-danger{border-color:#fca5a5;color:#dc2626}
+.btn-danger:hover{background:#fef2f2}
+.btn-reveal{border-color:#d97706;color:#b45309}
+.btn-reveal:hover{background:#fef3c7}
+.btn-reveal.active{background:#fef3c7}
+.flex-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pick-row{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pick-input{width:72px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-weight:500;text-align:center;background:#f5f5f3}
+.pick-btn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid #ddd;background:transparent;cursor:pointer;font-size:18px}
+.pick-btn:hover{background:#f5f5f3}
+.speed-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.word-card{border:1px solid #e8e8e8;border-radius:12px;padding:1.25rem;margin-bottom:12px;background:#fff}
+.word-card.correct{border-color:#16a34a;background:#f0fdf4}
+.word-card.wrong{border-color:#dc2626;background:#fef2f2}
+.word-controls{display:flex;align-items:center;gap:10px}
+.word-index{font-size:13px;color:#888;min-width:24px}
+.play-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid #ddd;background:transparent;cursor:pointer;flex-shrink:0}
+.play-btn:hover{background:#f5f5f3}
+.play-btn.playing{border-color:#4f46e5;background:#eef2ff}
+.word-input-field{flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px;background:#f5f5f3}
+.word-input-field:focus{outline:none;border-color:#aaa}
+.word-input-field.correct-input{border-color:#16a34a}
+.word-input-field.wrong-input{border-color:#dc2626}
+.word-hint{font-size:13px;margin-top:8px}
+.word-hint.correct-hint{color:#16a34a}
+.word-hint.wrong-hint{color:#dc2626}
+.answer-reveal{font-size:13px;margin-top:8px;padding:5px 10px;border-radius:8px;background:#fef3c7;color:#b45309;display:none}
+.answer-reveal.visible{display:block}
+.score-card{border-radius:12px;padding:2rem;text-align:center;background:#f5f5f3;margin-bottom:1.5rem}
+.score-big{font-size:48px;font-weight:500;line-height:1}
+.score-sub{font-size:13px;color:#888;margin-top:4px}
+.score-label{font-size:14px;color:#888;margin-top:6px}
+.review-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee;font-size:14px}
+.review-item:last-child{border-bottom:none}
+.badge{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.badge-ok{background:#dcfce7}
+.badge-no{background:#fee2e2}
+.panel{display:none}
+.panel.active{display:block}
+.setup-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:stretch}
+@media(max-width:600px){.setup-cols{grid-template-columns:1fr}}
+.word-list{width:100%;min-height:180px;max-height:260px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;background:#f5f5f3;padding:6px 0;font-size:14px}
+.word-list-item{padding:6px 12px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid transparent;font-family:monospace}
+.word-list-item:hover{background:#eee}
+.word-list-item.selected{background:#eff6ff;color:#1d4ed8;border-left:3px solid #3b82f6}
+.word-list-empty{padding:12px;font-size:13px;color:#aaa}
+textarea{width:100%;resize:vertical;min-height:80px;font-size:14px;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:monospace;background:#f5f5f3;color:#1a1a1a}
+textarea:focus{outline:none;border-color:#aaa}
+.dict-panel{flex:1;overflow-y:auto;border:1px solid #e8e8e8;border-radius:8px;background:#fff;padding:1rem;font-size:14px}
+.dict-empty{color:#aaa;font-size:13px}
+.dict-word{font-size:20px;font-weight:500;margin-bottom:4px}
+.dict-phonetic{font-size:13px;color:#888;margin-bottom:12px;font-family:monospace}
+.dict-pos{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#eff6ff;color:#1d4ed8;margin-bottom:6px;font-style:italic}
+.dict-def{font-size:14px;margin-bottom:4px;line-height:1.6}
+.dict-example{font-size:13px;color:#888;font-style:italic;margin-bottom:10px;padding-left:10px;border-left:2px solid #e0e0e0}
+.dict-loading{color:#888;font-size:13px}
+.dict-error{color:#dc2626;font-size:13px}
+.dict-section{margin-bottom:12px}
+.saved-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.saved-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e8e8e8;border-radius:10px;background:#f9f9f8;cursor:pointer;transition:border-color 0.15s}
+.saved-item:hover{border-color:#bbb;background:#f0f0ee}
+.saved-item-info{flex:1;min-width:0}
+.saved-item-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved-item-meta{font-size:12px;color:#aaa;margin-top:2px}
+.saved-empty{font-size:13px;color:#aaa;padding:4px 0}
+.save-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.save-name-input{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#f5f5f3;color:#1a1a1a}
+.save-name-input:focus{outline:none;border-color:#aaa}
+.divider{height:1px;background:#f0f0f0;margin:12px 0}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.section-title{font-size:13px;color:#888}
+
+/* 家長模式 */
+.parent-card{border:1px solid #e8e8e8;border-radius:12px;padding:1.25rem;margin-bottom:12px;background:#fff;display:flex;align-items:center;gap:14px}
+.parent-card.playing-card{border-color:#4f46e5;background:#eef2ff}
+.parent-word{font-size:22px;font-weight:500;flex:1;letter-spacing:0.02em}
+.parent-play-btn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid #ddd;background:transparent;cursor:pointer;flex-shrink:0}
+.parent-play-btn:hover{background:#f5f5f3}
+.parent-play-btn.playing{border-color:#4f46e5;background:#eef2ff}
+.parent-num{font-size:13px;color:#aaa;min-width:24px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="tab-bar">
+    <button class="tab active" id="tab-setup" onclick="showTab('setup')">設定單字</button>
+    <button class="tab" id="tab-quiz" onclick="showTab('quiz')">開始聽寫</button>
+    <button class="tab" id="tab-parent" onclick="showTab('parent')">家長模式</button>
+    <button class="tab hidden" id="tab-result" onclick="showTab('result')">批改結果</button>
+  </div>
+
+  <!-- 設定 -->
+  <div class="panel active" id="panel-setup">
+    <div class="card">
+      <div class="section-header">
+        <div class="lbl" style="margin-bottom:0">我的清單</div>
+        <button class="btn btn-sm btn-danger" onclick="clearAllSaved()">清空全部</button>
+      </div>
+      <div class="saved-list" id="saved-list"></div>
+      <div class="divider"></div>
+      <div class="section-title" style="margin-bottom:6px">儲存目前清單</div>
+      <div class="save-row">
+        <input class="save-name-input" type="text" id="save-name" placeholder="輸入清單名稱，例如：第三課單字">
+        <button class="btn btn-sm" onclick="saveCurrentList()">儲存</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">單字清單與字典</div>
+      <div class="setup-cols">
+        <div>
+          <div style="font-size:12px;color:#aaa;margin-bottom:6px">輸入單字（每行一個），點選查詢字典</div>
+          <textarea id="word-textarea" oninput="renderWordList()" placeholder="apple&#10;banana&#10;computer&#10;dictionary&#10;elephant"></textarea>
+          <div style="height:8px"></div>
+          <div class="word-list" id="word-list"><div class="word-list-empty">輸入單字後點選查詢字典</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <div style="font-size:12px;color:#aaa;margin-bottom:6px">字典解釋</div>
+          <div class="dict-panel" id="dict-panel">
+            <div class="dict-empty">← 點選左側單字查詢</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="loadSample()">載入範例單字</button>
+        <button class="btn btn-sm" onclick="document.getElementById('word-textarea').value='';renderWordList()">清除</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">每次隨機抽幾題？</div>
+      <div class="pick-row">
+        <button class="pick-btn" onclick="adjustPick(-1)">−</button>
+        <input class="pick-input" type="number" id="pick-n" min="1" value="5" oninput="clampPick()">
+        <button class="pick-btn" onclick="adjustPick(1)">+</button>
+        <span style="font-size:13px;color:#888" id="word-total">（共 0 個單字）</span>
+        <button class="btn btn-sm" onclick="pickAll()">全部都考</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">語音速度</div>
+      <div class="speed-row">
+        <span style="font-size:14px">慢</span>
+        <input type="range" id="speed-range" min="0.5" max="1.5" step="0.1" value="0.85" style="flex:1" oninput="document.getElementById('speed-val').textContent=parseFloat(this.value).toFixed(1)">
+        <span style="font-size:14px">快</span>
+        <span id="speed-val" style="font-size:14px;min-width:32px;text-align:right">0.9</span>
+      </div>
+    </div>
+
+    <div class="flex-row">
+      <button class="btn btn-primary" onclick="startQuiz()">開始聽寫 ↗</button>
+      <button class="btn btn-parent" onclick="startParent()">家長模式 ↗</button>
+    </div>
+  </div>
+
+  <!-- 家長模式 -->
+  <div class="panel" id="panel-parent">
+    <div style="font-size:13px;color:#888;margin-bottom:1rem" id="parent-count-label"></div>
+    <div id="parent-cards"></div>
+    <div class="flex-row" style="margin-top:1rem">
+      <button class="btn btn-parent" onclick="parentPlayAll()" id="parent-play-all-btn">全部依序朗讀</button>
+      <button class="btn" onclick="synth.cancel();clearPlayingState()">停止朗讀</button>
+      <button class="btn" onclick="showTab('setup')">← 修改設定</button>
+    </div>
+  </div>
+
+  <!-- 聽寫模式 -->
+  <div class="panel" id="panel-quiz">
+    <div style="font-size:13px;color:#888;margin-bottom:1rem" id="quiz-count-label"></div>
+    <div id="word-cards"></div>
+    <div class="flex-row" style="margin-top:1rem">
+      <button class="btn btn-primary" onclick="submitQuiz()">交卷批改 ↗</button>
+      <button class="btn" onclick="playAll()">全部朗讀一遍</button>
+      <button class="btn btn-reveal" id="reveal-btn" onclick="toggleReveal()">顯示答案</button>
+      <button class="btn" onclick="showTab('setup')">← 修改設定</button>
+    </div>
+  </div>
+
+  <!-- 批改結果 -->
+  <div class="panel" id="panel-result">
+    <div class="score-card">
+      <div class="score-big" id="score-display">-</div>
+      <div class="score-sub" id="score-sub"></div>
+      <div class="score-label" id="score-label"></div>
+    </div>
+    <div class="card"><div id="review-list"></div></div>
+    <div class="flex-row" style="margin-top:1rem">
+      <button class="btn btn-primary" onclick="retryWrong()">再練錯誤單字 ↗</button>
+      <button class="btn" onclick="redraw()">重新抽題再測</button>
+      <button class="btn" onclick="showTab('setup')">← 修改設定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allWords=[],currentWords=[],wrongWords=[],parentWords=[];
+let answersVisible=false,selectedWord=null,dictCache={};
+let currentPlayingIndex=-1;
+const synth=window.speechSynthesis;
+const LS_KEY='dictation_saved_lists';
+
+/* ── localStorage ── */
+function loadSavedLists(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return []; } }
+function saveLists(lists){ localStorage.setItem(LS_KEY,JSON.stringify(lists)); }
+function formatDate(iso){
+  const d=new Date(iso); const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderSavedList(){
+  const lists=loadSavedLists(); const container=document.getElementById('saved-list');
+  if(!lists.length){ container.innerHTML='<div class="saved-empty">尚未儲存任何清單</div>'; return; }
+  container.innerHTML=lists.map((item,i)=>`
+    <div class="saved-item" onclick="loadSavedItem(${i})">
+      <div class="saved-item-info">
+        <div class="saved-item-name">${escHtml(item.name)}</div>
+        <div class="saved-item-meta">${item.words.length} 個單字　·　上次使用：${formatDate(item.lastUsed)}</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteSavedItem(${i})">刪除</button>
+    </div>`).join('');
+}
+
+function saveCurrentList(){
+  const name=document.getElementById('save-name').value.trim();
+  const words=getWords();
+  if(!name){ alert('請輸入清單名稱'); return; }
+  if(!words.length){ alert('請先輸入單字'); return; }
+  const lists=loadSavedLists();
+  const existing=lists.findIndex(l=>l.name===name);
+  const item={ name, words, lastUsed: new Date().toISOString() };
+  if(existing>=0){ if(!confirm(`「${name}」已存在，要覆蓋嗎？`)) return; lists[existing]=item; }
+  else{ lists.unshift(item); }
+  saveLists(lists); renderSavedList();
+  document.getElementById('save-name').value='';
+}
+
+function loadSavedItem(i){
+  const lists=loadSavedLists(); const item=lists[i]; if(!item) return;
+  document.getElementById('word-textarea').value=item.words.join('\n');
+  item.lastUsed=new Date().toISOString(); lists[i]=item;
+  saveLists(lists); renderSavedList(); renderWordList();
+  document.getElementById('save-name').value=item.name;
+}
+
+function deleteSavedItem(i){
+  const lists=loadSavedLists();
+  if(!confirm(`確定刪除「${lists[i].name}」？`)) return;
+  lists.splice(i,1); saveLists(lists); renderSavedList();
+}
+
+function clearAllSaved(){
+  if(!confirm('確定清空所有儲存的清單？此動作無法復原。')) return;
+  localStorage.removeItem(LS_KEY); renderSavedList();
+}
+
+/* ── Tab ── */
+function showTab(name){
+  ['setup','quiz','parent','result'].forEach(t=>{
+    document.getElementById('panel-'+t).classList.toggle('active',t===name);
+    const tab=document.getElementById('tab-'+t);
+    if(tab) tab.classList.toggle('active',t===name);
+  });
+  if(name!=='parent'){ synth.cancel(); clearPlayingState(); }
+}
+
+/* ── 語音 ── */
+function getRate(){ return parseFloat(document.getElementById('speed-range').value); }
+function speak(text){ synth.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=getRate(); synth.speak(u); }
+
+/* ── 單字清單 ── */
+function getWords(){
+  return document.getElementById('word-textarea').value.split('\n').map(w=>w.trim().toLowerCase()).filter(w=>w);
+}
+
+function renderWordList(){
+  const words=getWords(); const list=document.getElementById('word-list');
+  document.getElementById('word-total').textContent='（共 '+words.length+' 個單字）';
+  if(!words.length){ list.innerHTML='<div class="word-list-empty">輸入單字後點選查詢字典</div>'; return; }
+  list.innerHTML=words.map(w=>`<div class="word-list-item${selectedWord===w?' selected':''}" onclick="selectWord('${w.replace(/'/g,"\\'")}',this)">${w}</div>`).join('');
+  clampPick();
+}
+
+function selectWord(word,el){
+  selectedWord=word;
+  document.querySelectorAll('.word-list-item').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected'); lookupDict(word);
+}
+
+/* ── 字典 ── */
+async function lookupDict(word){
+  const panel=document.getElementById('dict-panel');
+  if(dictCache[word]){ renderDict(dictCache[word],word); return; }
+  panel.innerHTML='<div class="dict-loading">查詢中...</div>';
+  try{
+    const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+    if(!res.ok) throw new Error();
+    const data=await res.json(); dictCache[word]=data; renderDict(data,word);
+  }catch(e){
+    panel.innerHTML=`<div class="dict-word">${word}</div><div class="dict-error" style="margin-top:8px">查無此單字，請確認拼字是否正確。</div>`;
+  }
+}
+
+function renderDict(data,word){
+  const panel=document.getElementById('dict-panel'); const entry=data[0];
+  const phonetic=entry.phonetics?.find(p=>p.text)?.text||entry.phonetic||'';
+  let html=`<div class="dict-word">${word}</div>`;
+  if(phonetic) html+=`<div class="dict-phonetic">${phonetic}</div>`;
+  (entry.meanings||[]).slice(0,3).forEach(m=>{
+    html+=`<div class="dict-section"><span class="dict-pos">${m.partOfSpeech}</span>`;
+    (m.definitions||[]).slice(0,2).forEach(d=>{
+      html+=`<div class="dict-def">${d.definition}</div>`;
+      if(d.example) html+=`<div class="dict-example">"${d.example}"</div>`;
+    });
+    html+='</div>';
+  });
+  panel.innerHTML=html;
+}
+
+function loadSample(){
+  document.getElementById('word-textarea').value='beautiful\nchallenge\ndictionary\nenvironment\nfrequently\ngratitude\nhospital\nimportant\njealousy\nknowledge\nlanguage\nmemory\nnecessary\nopportunity\npractice';
+  renderWordList();
+}
+
+/* ── 抽題 ── */
+function clampPick(){
+  const words=getWords(); const pick=document.getElementById('pick-n');
+  let v=parseInt(pick.value)||1; if(v<1)v=1; if(words.length>0&&v>words.length)v=words.length; pick.value=v;
+}
+function adjustPick(d){ const p=document.getElementById('pick-n'); p.value=(parseInt(p.value)||1)+d; clampPick(); }
+function pickAll(){ const w=getWords(); if(w.length>0) document.getElementById('pick-n').value=w.length; }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* ── 家長模式 ── */
+function startParent(){
+  allWords=getWords(); if(!allWords.length){ alert('請先輸入單字！'); return; }
+  const n=Math.min(parseInt(document.getElementById('pick-n').value)||allWords.length,allWords.length);
+  parentWords=shuffle(allWords).slice(0,n);
+  renderParent(parentWords);
+  showTab('parent');
+}
+
+function renderParent(wds){
+  synth.cancel(); clearPlayingState();
+  document.getElementById('parent-count-label').textContent='共 '+wds.length+' 個單字　·　點播放鍵朗讀單字，或按「全部依序朗讀」';
+  const container=document.getElementById('parent-cards'); container.innerHTML='';
+  wds.forEach((w,i)=>{
+    const safe=w.replace(/'/g,"\\'");
+    const div=document.createElement('div'); div.className='parent-card'; div.id='pc-'+i;
+    div.innerHTML=`
+      <span class="parent-num">${i+1}.</span>
+      <button class="parent-play-btn" id="ppb-${i}" onclick="parentSpeak('${safe}',${i})">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="4,2 13,8 4,14"/></svg>
+      </button>
+      <span class="parent-word">${w}</span>`;
+    container.appendChild(div);
+  });
+}
+
+function clearPlayingState(){
+  currentPlayingIndex=-1;
+  document.querySelectorAll('.parent-card').forEach(c=>c.classList.remove('playing-card'));
+  document.querySelectorAll('.parent-play-btn').forEach(b=>b.classList.remove('playing'));
+}
+
+function parentSpeak(word, index){
+  synth.cancel();
+  clearPlayingState();
+  currentPlayingIndex=index;
+  const card=document.getElementById('pc-'+index);
+  const btn=document.getElementById('ppb-'+index);
+  if(card) card.classList.add('playing-card');
+  if(btn) btn.classList.add('playing');
+  const u=new SpeechSynthesisUtterance(word);
+  u.lang='en-US'; u.rate=getRate();
+  u.onend=()=>{ clearPlayingState(); };
+  synth.speak(u);
+}
+
+function parentPlayAll(){
+  synth.cancel(); clearPlayingState();
+  let i=0;
+  function next(){
+    if(i>=parentWords.length){ clearPlayingState(); return; }
+    clearPlayingState();
+    currentPlayingIndex=i;
+    const card=document.getElementById('pc-'+i);
+    const btn=document.getElementById('ppb-'+i);
+    if(card){ card.classList.add('playing-card'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    if(btn) btn.classList.add('playing');
+    const u=new SpeechSynthesisUtterance(parentWords[i]);
+    u.lang='en-US'; u.rate=getRate();
+    u.onend=()=>{ i++; setTimeout(next,600); };
+    synth.speak(u);
+  }
+  next();
+}
+
+/* ── 聽寫模式 ── */
+function startQuiz(){
+  allWords=getWords(); if(!allWords.length){ alert('請先輸入單字！'); return; }
+  const n=Math.min(parseInt(document.getElementById('pick-n').value)||allWords.length,allWords.length);
+  currentWords=shuffle(allWords).slice(0,n); answersVisible=false; renderQuiz(currentWords);
+  document.getElementById('tab-result').classList.add('hidden'); showTab('quiz');
+}
+
+function renderQuiz(wds){
+  answersVisible=false;
+  const btn=document.getElementById('reveal-btn'); btn.textContent='顯示答案'; btn.classList.remove('active');
+  document.getElementById('quiz-count-label').textContent='本次抽題：'+wds.length+' 題（共 '+allWords.length+' 個單字）';
+  const container=document.getElementById('word-cards'); container.innerHTML='';
+  wds.forEach((w,i)=>{
+    const safe=w.replace(/'/g,"\\'");
+    const div=document.createElement('div'); div.className='word-card'; div.id='wc-'+i;
+    div.innerHTML=`<div class="word-controls">
+      <span class="word-index">${i+1}.</span>
+      <button class="play-btn" onclick="speak('${safe}')"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="4,2 13,8 4,14"/></svg></button>
+      <input class="word-input-field" type="text" id="ans-${i}" placeholder="在這裡輸入…" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div><div class="answer-reveal" id="reveal-${i}">答案：${w}</div>`;
+    container.appendChild(div);
+  });
+  setTimeout(()=>{ const f=document.getElementById('ans-0'); if(f) f.focus(); },100);
+}
+
+function toggleReveal(){
+  answersVisible=!answersVisible;
+  const btn=document.getElementById('reveal-btn');
+  btn.textContent=answersVisible?'隱藏答案':'顯示答案'; btn.classList.toggle('active',answersVisible);
+  currentWords.forEach((_,i)=>{ const el=document.getElementById('reveal-'+i); if(el) el.classList.toggle('visible',answersVisible); });
+}
+
+function playAll(){
+  synth.cancel(); let i=0;
+  function next(){ if(i>=currentWords.length)return; const u=new SpeechSynthesisUtterance(currentWords[i]); u.lang='en-US'; u.rate=getRate(); u.onend=()=>setTimeout(next,700); synth.speak(u); i++; }
+  next();
+}
+
+/* ── 批改 ── */
+function submitQuiz(){
+  if(answersVisible) toggleReveal();
+  let correct=0; wrongWords=[]; const reviewHtml=[];
+  currentWords.forEach((w,i)=>{
+    const input=document.getElementById('ans-'+i); const ans=input?input.value.trim().toLowerCase():''; const ok=ans===w;
+    if(ok) correct++; else wrongWords.push(w);
+    const card=document.getElementById('wc-'+i);
+    if(card){
+      card.className='word-card '+(ok?'correct':'wrong');
+      if(input) input.className='word-input-field '+(ok?'correct-input':'wrong-input');
+      let hint=card.querySelector('.word-hint'); if(!hint){ hint=document.createElement('div'); card.appendChild(hint); }
+      hint.className='word-hint '+(ok?'correct-hint':'wrong-hint');
+      hint.textContent=ok?'正確！':'正確答案：'+w+(ans?'（你寫：'+ans+'）':'（未作答）');
+    }
+    const icon=ok?`<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1.5,6 5,9.5 10.5,2.5"/></svg>`:`<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>`;
+    reviewHtml.push(`<div class="review-item"><div class="badge ${ok?'badge-ok':'badge-no'}">${icon}</div><span style="flex:1">${w}</span>${!ok?`<span style="font-size:13px;color:#dc2626">${ans||'（未作答）'}</span>`:''}</div>`);
+  });
+  const pct=Math.round(correct/currentWords.length*100);
+  document.getElementById('score-display').textContent=correct+' / '+currentWords.length;
+  document.getElementById('score-sub').textContent='本次抽 '+currentWords.length+' 題，答對率 '+pct+'%';
+  document.getElementById('score-label').textContent=pct===100?'完美！':pct>=80?'表現不錯':pct>=60?'繼續加油':'多加練習吧';
+  document.getElementById('review-list').innerHTML=reviewHtml.join('');
+  document.getElementById('tab-result').classList.remove('hidden'); showTab('result');
+}
+
+function retryWrong(){ if(!wrongWords.length){ alert('沒有錯誤單字！'); return; } currentWords=wrongWords; renderQuiz(currentWords); showTab('quiz'); }
+function redraw(){ const n=Math.min(parseInt(document.getElementById('pick-n').value)||allWords.length,allWords.length); currentWords=shuffle(allWords).slice(0,n); renderQuiz(currentWords); showTab('quiz'); }
+
+renderWordList();
+renderSavedList();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
