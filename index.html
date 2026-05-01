@@ -170,7 +170,17 @@ textarea:focus{outline:none;border-color:#aaa}
     </div>
 
     <div class="card">
-      <div class="lbl">語音速度</div>
+      <div class="lbl">語音設定</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:12px;color:#aaa;margin-bottom:6px">發音選擇</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="voice-select" style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#f5f5f3;color:#1a1a1a;min-width:0">
+            <option value="">載入中...</option>
+          </select>
+          <button class="btn btn-sm" onclick="previewVoice()">試聽</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#aaa;margin-bottom:6px">語音速度</div>
       <div class="speed-row">
         <span style="font-size:14px">慢</span>
         <input type="range" id="speed-range" min="0.5" max="1.5" step="0.1" value="0.85" style="flex:1" oninput="document.getElementById('speed-val').textContent=parseFloat(this.value).toFixed(1)">
@@ -297,8 +307,60 @@ function showTab(name){
 }
 
 /* ── 語音 ── */
+let voices = [];
+
+function loadVoices(){
+  const all = synth.getVoices();
+  // Filter English voices only, prefer en-US, en-GB, en-AU etc.
+  const enVoices = all.filter(v => v.lang.startsWith('en'));
+  if(!enVoices.length) return;
+  voices = enVoices;
+  const sel = document.getElementById('voice-select');
+  const prev = sel.value;
+  sel.innerHTML = enVoices.map((v,i) => {
+    const region = v.lang === 'en-US' ? '🇺🇸 美式' :
+                   v.lang === 'en-GB' ? '🇬🇧 英式' :
+                   v.lang === 'en-AU' ? '🇦🇺 澳洲' :
+                   v.lang === 'en-IN' ? '🇮🇳 印度' :
+                   v.lang === 'en-IE' ? '🇮🇪 愛爾蘭' :
+                   v.lang === 'en-ZA' ? '🇿🇦 南非' :
+                   v.lang;
+    const local = v.localService ? '' : ' ☁';
+    return `<option value="${i}">${region} — ${v.name}${local}</option>`;
+  }).join('');
+  // Restore previous selection or pick first en-US
+  if(prev && sel.options[prev]) { sel.value = prev; }
+  else {
+    const usIdx = enVoices.findIndex(v => v.lang === 'en-US');
+    sel.value = usIdx >= 0 ? usIdx : 0;
+  }
+}
+
+function getSelectedVoice(){
+  const sel = document.getElementById('voice-select');
+  const idx = parseInt(sel.value);
+  return (voices[idx]) || null;
+}
+
 function getRate(){ return parseFloat(document.getElementById('speed-range').value); }
-function speak(text){ synth.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang='en-US'; u.rate=getRate(); synth.speak(u); }
+
+function speak(text){
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = getSelectedVoice();
+  if(v) u.voice = v;
+  u.lang = v ? v.lang : 'en-US';
+  u.rate = getRate();
+  synth.speak(u);
+}
+
+function previewVoice(){
+  speak('Hello! This is a pronunciation preview.');
+}
+
+// Load voices — some browsers load async
+synth.onvoiceschanged = loadVoices;
+loadVoices();
 
 /* ── 單字清單 ── */
 function getWords(){
