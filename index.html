@@ -466,7 +466,8 @@ function parentSpeak(word, index){
   if(card) card.classList.add('playing-card');
   if(btn) btn.classList.add('playing');
   const u=new SpeechSynthesisUtterance(word);
-  u.lang='en-US'; u.rate=getRate();
+  const v=getSelectedVoice(); if(v) u.voice=v;
+  u.lang=v?v.lang:'en-US'; u.rate=getRate();
   u.onend=()=>{ clearPlayingState(); };
   synth.speak(u);
 }
@@ -483,7 +484,8 @@ function parentPlayAll(){
     if(card){ card.classList.add('playing-card'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
     if(btn) btn.classList.add('playing');
     const u=new SpeechSynthesisUtterance(parentWords[i]);
-    u.lang='en-US'; u.rate=getRate();
+    const v=getSelectedVoice(); if(v) u.voice=v;
+    u.lang=v?v.lang:'en-US'; u.rate=getRate();
     u.onend=()=>{ i++; setTimeout(next,600); };
     synth.speak(u);
   }
