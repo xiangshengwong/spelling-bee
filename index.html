@@ -197,7 +197,13 @@ textarea:focus{outline:none;border-color:#aaa}
 
   <!-- 家長模式 -->
   <div class="panel" id="panel-parent">
-    <div style="font-size:13px;color:#888;margin-bottom:1rem" id="parent-count-label"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
+      <div style="font-size:13px;color:#888" id="parent-count-label"></div>
+      <div style="display:flex;border:1px solid #ddd;border-radius:8px;overflow:hidden;flex-shrink:0">
+        <button id="order-btn-seq" onclick="setParentOrder('seq')" style="padding:5px 14px;font-size:13px;border:none;cursor:pointer;background:#1a1a1a;color:#fff">照順序</button>
+        <button id="order-btn-rand" onclick="setParentOrder('rand')" style="padding:5px 14px;font-size:13px;border:none;cursor:pointer;background:transparent;color:#888">隨機</button>
+      </div>
+    </div>
     <div id="parent-cards"></div>
     <div class="flex-row" style="margin-top:1rem">
       <button class="btn btn-parent" onclick="parentPlayAll()" id="parent-play-all-btn">全部依序朗讀</button>
@@ -426,10 +432,25 @@ function pickAll(){ const w=getWords(); if(w.length>0) document.getElementById('
 function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 
 /* ── 家長模式 ── */
+let parentOrder = 'seq'; // 'seq' | 'rand'
+
+function setParentOrder(mode){
+  parentOrder = mode;
+  document.getElementById('order-btn-seq').style.background = mode==='seq' ? '#1a1a1a' : 'transparent';
+  document.getElementById('order-btn-seq').style.color = mode==='seq' ? '#fff' : '#888';
+  document.getElementById('order-btn-rand').style.background = mode==='rand' ? '#1a1a1a' : 'transparent';
+  document.getElementById('order-btn-rand').style.color = mode==='rand' ? '#fff' : '#888';
+  // Re-draw with new order using same source words
+  allWords=getWords(); if(!allWords.length) return;
+  const n=Math.min(parseInt(document.getElementById('pick-n').value)||allWords.length,allWords.length);
+  parentWords = mode==='rand' ? shuffle(allWords).slice(0,n) : allWords.slice(0,n);
+  renderParent(parentWords);
+}
+
 function startParent(){
   allWords=getWords(); if(!allWords.length){ alert('請先輸入單字！'); return; }
   const n=Math.min(parseInt(document.getElementById('pick-n').value)||allWords.length,allWords.length);
-  parentWords=shuffle(allWords).slice(0,n);
+  parentWords = parentOrder==='rand' ? shuffle(allWords).slice(0,n) : allWords.slice(0,n);
   renderParent(parentWords);
   showTab('parent');
 }
